@@ -11,23 +11,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
 
     useEffect(() => {
-        const unsubscribe = onAuthChange((user) => {
+        const unsubscribe = onAuthChange(async (user) => {
             if (user) {
                 // User is signed in
                 setUser({
                     uid: user.uid,
                     email: user.email || '',
-                    role: 'user', // Default, maybe fetch capability later
+                    role: 'user',
                 });
 
-                // If on public pages (login/register), redirect to dashboard
+                // If on auth pages, sync session and redirect
                 if (pathname === '/login' || pathname === '/register') {
-                    router.push('/dashboard');
+                    try {
+                        let token = 'mock-token';
+                        if (typeof user.getIdToken === 'function') {
+                            token = await user.getIdToken();
+                        }
+
+                        // Sync cookie
+                        await fetch('/api/auth/session', {
+                            method: 'POST',
+                            body: JSON.stringify({ idToken: token }),
+                        });
+
+                        router.push('/dashboard');
+                    } catch (err) {
+                        console.error('Session sync failed:', err);
+                    }
                 }
             } else {
                 // User is signed out
                 clearAuth();
-                // If on protected pages, optional redirect (middleware handles this mainly)
             }
             setLoading(false);
         });

@@ -108,11 +108,37 @@ export function ChecklistShell({ assessmentId }: { assessmentId: string }) {
 
     if (loading) return <div className="p-10 text-center">กำลังโหลดแบบตรวจสอบ...</div>;
 
+    const handleReset = async () => {
+        if (!confirm('คุณต้องการเริ่มทำแบบประเมินใหม่ใช่หรือไม่?')) return;
+        setSaving(true);
+        try {
+            // Mark current assessment as cancelled so it doesn't show up as latest
+            await fetch(`/api/assessment/${assessmentId}`, {
+                method: 'PATCH',
+                body: JSON.stringify({ status: 'cancelled' })
+            });
+            window.location.reload(); // Reload to trigger new assessment flow
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
     if (obligations.length === 0) {
         return (
-            <div className="p-10 text-center">
-                <p>ไม่พบรายการตรวจสอบที่เกี่ยวข้อง </p>
-                <Button onClick={handleFinish} className="mt-4">ข้ามไปดูผลการประเมิน</Button>
+            <div className="p-10 text-center space-y-4">
+                <div className="text-4xl">📭</div>
+                <h3 className="text-lg font-medium text-slate-800">ไม่พบรายการตรวจสอบ</h3>
+                <p className="text-slate-500">
+                    อาจเกิดจากข้อมูลนำเข้าไม่เพียงพอ หรือยังไม่มีกฎหมายที่เกี่ยวข้องในระบบ
+                </p>
+                <div className="flex gap-3 justify-center">
+                    <Button variant="outline" onClick={handleReset} disabled={saving}>
+                        เริ่มประเมินใหม่
+                    </Button>
+                    <Button onClick={handleFinish} disabled={saving}>
+                        ดูผลการประเมิน
+                    </Button>
+                </div>
             </div>
         );
     }

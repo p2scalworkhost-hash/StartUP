@@ -66,43 +66,19 @@ export async function POST(
         computed_at: new Date().toISOString(),
     };
 
-    // --- AI Analysis ---
-    // Only query AI if there are issues (Red/Yellow)
+    // --- AI Analysis (DISABLED BY USER REQUEST) ---
+    /*
     const criticalIssues = gapItems.filter(i => i.gap_level === 'red' || i.gap_level === 'yellow');
 
     if (criticalIssues.length > 0) {
         try {
-            const prompt = `
-Role: You are a SHEQ (Safety, Health, Environment, Quality) Compliance Auditor.
-Task: Analyze the following compliance gaps and provide an "Executive Summary".
-Context:
-- Company Profile: ${JSON.stringify(profile)}
-- Critical Gaps Found: ${criticalIssues.length} items
+           // ... (AI Logic)
+        } catch (error) { ... }
+    } else { ... }
+    */
 
-Top 5 Critical Gaps:
-${criticalIssues.slice(0, 5).map(i => `- [${i.gap_level.toUpperCase()}] ${i.topic} (Category: ${i.category})`).join('\n')}
-
-Output Format:
-1. Executive Summary (2-3 sentences)
-2. Immediate Action Plan (Bullet points, prioritized)
-3. Long-term Suggestion
-
-Keep it professional, concise, and in Thai language.
-`;
-
-            const aiResponse = await chatCompletion([
-                { role: 'user', content: prompt }
-            ]);
-
-            gapSummary.ai_summary = aiResponse;
-
-        } catch (error) {
-            console.error('AI Analysis failed:', error);
-            gapSummary.ai_summary = 'AI Analysis unavailable at this time.';
-        }
-    } else {
-        gapSummary.ai_summary = 'ยอดเยี่ยม! ไม่พบข้อบกพร่องที่มีความเสี่ยงสูงหรือปานกลางในขณะนี้ รักษามาตรฐานต่อไป';
-    }
+    // Fallback static summary
+    gapSummary.ai_summary = 'การวิเคราะห์เสร็จสมบูรณ์ (AI Analysis Disabled)';
 
     await assessmentRef.update({
         gap_summary: gapSummary,

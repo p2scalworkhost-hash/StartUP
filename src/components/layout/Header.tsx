@@ -11,6 +11,9 @@ export function Header() {
     const router = useRouter();
 
     const handleLogout = async () => {
+        // Clear server session
+        await fetch('/api/auth/session', { method: 'DELETE' });
+        // Clear client auth
         await logout();
         router.push('/login');
     };

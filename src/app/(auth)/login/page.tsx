@@ -19,10 +19,9 @@ export default function LoginPage() {
 
         try {
             await loginWithEmail(email, password);
-            router.push('/dashboard');
+            // Redirect handled by AuthProvider
         } catch (err: any) {
             setError(err.message || 'เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่');
-        } finally {
             setLoading(false);
         }
     };

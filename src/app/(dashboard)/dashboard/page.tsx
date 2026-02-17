@@ -21,18 +21,25 @@ export default function DashboardPage() {
             if (!companyId) return;
 
             try {
+                // Query without orderBy to avoid composite index requirement
                 const q = query(
                     collection(db, 'assessments'),
-                    where('company_id', '==', companyId),
-                    orderBy('created_at', 'desc'),
-                    limit(1)
+                    where('company_id', '==', companyId)
                 );
                 const snap = await getDocs(q);
 
                 if (!snap.empty) {
-                    const data = snap.docs[0].data();
-                    if (data.gap_summary) {
-                        setSummary(data.gap_summary as GapSummary);
+                    // Client-side sort: newest first
+                    const docs = snap.docs.map(d => d.data() as any);
+                    docs.sort((a, b) => {
+                        const tA = a.created_at?.seconds || 0;
+                        const tB = b.created_at?.seconds || 0;
+                        return tB - tA;
+                    });
+
+                    const latest = docs[0];
+                    if (latest.gap_summary) {
+                        setSummary(latest.gap_summary as GapSummary);
                     }
                 }
             } catch (error) {

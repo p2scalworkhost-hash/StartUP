@@ -13,6 +13,11 @@ export async function GET(
 ) {
     const assessmentId = params.id;
 
+    if (!adminDb) {
+        console.error('Firebase Admin not initialized');
+        return NextResponse.json({ error: 'Database connection failed' }, { status: 500 });
+    }
+
     const assessmentRef = adminDb.collection('assessments').doc(assessmentId);
     const assessmentSnap = await assessmentRef.get();
 
@@ -29,7 +34,14 @@ export async function GET(
 
     // Fetch obligations
     const obligations: any[] = [];
-    const batches = chunkArray(applicable_obligations, 10);
+    // Validating obligations list
+    const validObligations = applicable_obligations.filter((id: any) => typeof id === 'string' && id.length > 0);
+
+    if (validObligations.length === 0) {
+        return NextResponse.json({ obligations: [], compliance_records: {} });
+    }
+
+    const batches = chunkArray(validObligations, 10);
 
     for (const batch of batches) {
         const snap = await adminDb.collection('obligations')

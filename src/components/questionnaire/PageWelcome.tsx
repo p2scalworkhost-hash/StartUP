@@ -1,10 +1,19 @@
 'use client';
 
 import { useAssessmentStore } from '@/stores/assessmentStore';
+import { useAuthStore } from '@/stores/authStore';
 import { Button } from '@/components/ui/Button';
+import { useEffect } from 'react';
 
 export function PageWelcome() {
     const { nextPage, companyName, setCompanyName } = useAssessmentStore();
+    const { companyName: authCompanyName } = useAuthStore();
+
+    useEffect(() => {
+        if (authCompanyName && !companyName) {
+            setCompanyName(authCompanyName);
+        }
+    }, [authCompanyName, companyName, setCompanyName]);
 
     return (
         <div className="text-center py-12 space-y-8">
@@ -28,10 +37,11 @@ export function PageWelcome() {
                 </label>
                 <input
                     type="text"
-                    className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-900"
+                    className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-900 disabled:bg-slate-100 disabled:text-slate-500"
                     placeholder="ระบุชื่อบริษัทของคุณ"
                     value={companyName}
                     onChange={(e) => setCompanyName(e.target.value)}
+                    disabled={!!authCompanyName} // Disable if auto-filled from auth
                 />
             </div>
 

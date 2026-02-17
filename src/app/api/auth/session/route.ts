@@ -22,18 +22,22 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'No ID token provided' }, { status: 400 });
         }
 
-        // FORCE FALLBACK:
-        // Skip Admin SDK entirely to prevent 500 errors during setup phase.
-        // We just verify the token on client/middleware (or trust it for now as it comes from Firebase Client SDK).
-
-        console.log('[API/Session] Setting fallback session cookie');
-
+        // Create Session Cookie using Admin SDK
+        // (Now that we have the private key, this will work)
         const expiresIn = 60 * 60 * 24 * 5 * 1000; // 5 days
+
+        if (!adminAuth) {
+            console.error('[API/Session] Admin Auth not initialized (Check env vars)');
+            return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+        }
+
+        const sessionCookie = await adminAuth.createSessionCookie(idToken, { expiresIn });
+
         const isProduction = process.env.NODE_ENV === 'production';
 
-        const response = NextResponse.json({ status: 'success', mode: 'fallback_forced' });
+        const response = NextResponse.json({ status: 'success', mode: 'live' });
 
-        response.cookies.set('session', idToken, {
+        response.cookies.set('session', sessionCookie, {
             maxAge: expiresIn / 1000,
             httpOnly: true,
             secure: isProduction,
@@ -58,15 +62,22 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: 'No session' }, { status: 401 });
     }
 
-    // In fallback mode, we can't easily verify signature server-side without Admin SDK.
-    // For middleware protection, we assume if cookie exists, it's valid enough to pass.
-    // Real strict verification happens on client specific data fetches or via Firebase Rules.
-    return NextResponse.json({
-        uid: 'fallback_user',
-        email: 'user@example.com',
-        role: 'user',
-        mode: 'fallback'
-    });
+    try {
+        if (!adminAuth) {
+            throw new Error('Admin Auth not initialized');
+        }
+
+        const decodedClaims = await adminAuth.verifySessionCookie(session, true);
+
+        return NextResponse.json({
+            uid: decodedClaims.uid,
+            email: decodedClaims.email,
+            role: decodedClaims.role || 'user',
+            mode: 'live'
+        });
+    } catch (error) {
+        return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
+    }
 }
 
 export async function DELETE() {

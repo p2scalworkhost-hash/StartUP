@@ -10,9 +10,9 @@ import { useRouter } from 'next/navigation';
 
 const STEPS = [
     { label: 'กำลังสร้างโปรไฟล์บริษัท...', duration: 1000 },
-    { label: 'กำลังวิเคราะห์ข้อมูลบริษัท...', duration: 1500 },
-    { label: 'กำลังจับคู่กฎหมายที่เกี่ยวข้อง...', duration: 2000 },
-    { label: 'กำลังสร้าง Checklist...', duration: 1500 },
+    { label: 'กำลังประมวลผลข้อมูล...', duration: 1500 },
+    { label: 'กำลังตรวจสอบกฎหมายที่เกี่ยวข้อง...', duration: 2000 },
+    { label: 'กำลังสร้างรายการตรวจสอบ...', duration: 1500 },
     { label: 'เสร็จสิ้น! กำลังเปลี่ยนหน้า...', duration: 1000 },
 ];
 
@@ -90,9 +90,22 @@ export function PageProcessing() {
                     });
                 }
 
-                // Also get obligations? For now just laws. 
-                // Obligations can be lazily loaded or fetched on backend later.
-                // But let's stick to laws for now.
+                // Step 2.5: Find Obligations
+                const applicableObligations: string[] = [];
+                const lawBatches = [];
+                for (let i = 0; i < applicableLaws.length; i += 10) {
+                    lawBatches.push(applicableLaws.slice(i, i + 10));
+                }
+
+                for (const batch of lawBatches) {
+                    if (batch.length === 0) continue;
+                    const obQ = query(collection(db, 'obligations'), where('law_id', 'in', batch));
+                    const snap = await getDocs(obQ);
+                    snap.forEach(d => {
+                        const oid = d.data().obligation_id;
+                        if (oid) applicableObligations.push(oid);
+                    });
+                }
 
                 await new Promise(r => setTimeout(r, 1000));
 
@@ -105,7 +118,7 @@ export function PageProcessing() {
                     profile,
                     activity_tags: activityTags,
                     applicable_laws: applicableLaws,
-                    applicable_obligations: [], // Populate later
+                    applicable_obligations: applicableObligations,
                     compliance_records: {},
                     gap_summary: null,
                     status: 'checklist', // Ready for checklist

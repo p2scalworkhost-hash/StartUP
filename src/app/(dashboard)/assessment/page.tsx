@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { QuestionnaireShell } from '@/components/questionnaire/QuestionnaireShell';
+import { useAssessmentStore } from '@/stores/assessmentStore';
 import { ChecklistShell } from '@/components/checklist/ChecklistShell';
 import { useAuthStore } from '@/stores/authStore';
 import { db } from '@/lib/firebase/client';
@@ -26,32 +27,38 @@ export default function AssessmentPage() {
 
             try {
                 // Find latest active assessment
+                // Remove orderBy to avoid index error
                 const q = query(
                     collection(db, 'assessments'),
-                    where('company_id', '==', companyId),
-                    orderBy('created_at', 'desc'),
-                    limit(1)
+                    where('company_id', '==', companyId)
                 );
                 const snap = await getDocs(q);
 
                 if (snap.empty) {
+                    // Reset store to ensure clean slate
+                    useAssessmentStore.getState().resetProfile();
                     setView('profiling');
                 } else {
-                    const data = snap.docs[0].data();
-                    const status = data.status;
+                    // Client-side sort
+                    const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as any));
+                    docs.sort((a, b) => {
+                        const tA = a.created_at?.seconds || 0;
+                        const tB = b.created_at?.seconds || 0;
+                        return tB - tA;
+                    });
+
+                    const latest = docs[0];
+                    const status = latest.status;
 
                     if (status === 'completed') {
-                        // If completed, redirect to dashboard or show summary?
-                        // Usually redirect.
                         router.push('/dashboard');
                         return;
                     } else if (status === 'checklist' || status === 'gap_analysis') {
-                        setAssessmentId(snap.docs[0].id);
+                        setAssessmentId(latest.id);
                         setView('checklist');
                     } else {
-                        // 'profiling' or 'mapping'
-                        // If mapping, should auto-transition to checklist eventually
-                        // For now treat as profiling or loading
+                        // Reset store for new/cancelled assessment
+                        useAssessmentStore.getState().resetProfile();
                         setView('profiling');
                     }
                 }
