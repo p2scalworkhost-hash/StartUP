@@ -1,0 +1,21 @@
+{
+    "functions": {
+        "src/app/api/ai/**": {
+            "maxDuration": 60
+        },
+        "src/app/api/assessment/*/report": {
+            "maxDuration": 30
+        }
+    },
+    "headers": [
+        {
+            "source": "/api/(.*)",
+            "headers": [
+                {
+                    "key": "X-Content-Type-Options",
+                    "value": "nosniff"
+                }
+            ]
+        }
+    ]
+}
