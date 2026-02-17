@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebase/admin';
+import { adminDb, adminAuth } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { computeGapLevel, computeRiskScore, computeOverallScore, computeByCategory } from '@/lib/engines/gap-analyzer';
 import { getTemplateRecommendation } from '@/lib/engines/recommendation-engine';
@@ -15,6 +15,17 @@ export async function POST(
     req: NextRequest,
     { params }: { params: { id: string } }
 ) {
+    // Auth check
+    const session = req.cookies.get('session')?.value;
+    if (!session || !adminAuth) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    try {
+        await adminAuth.verifySessionCookie(session, true);
+    } catch {
+        return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
+    }
+
     const assessmentId = params.id;
 
     const assessmentRef = adminDb.collection('assessments').doc(assessmentId);
@@ -27,13 +38,21 @@ export async function POST(
     const obligations: any[] = [];
     const batches = chunkArray(applicable_obligations, 10);
 
-    for (const batch of batches) {
-        if (batch.length === 0) continue;
-        const snap = await adminDb.collection('obligations')
+    // Parallel fetch (Eliminating Waterfall)
+    const promises = batches.map(batch => {
+        if (batch.length === 0) return Promise.resolve(null);
+        return adminDb.collection('obligations')
             .where('obligation_id', 'in', batch)
             .get();
-        obligations.push(...snap.docs.map(d => d.data()));
-    }
+    });
+
+    const snapshots = await Promise.all(promises);
+
+    snapshots.forEach(snap => {
+        if (snap) {
+            obligations.push(...snap.docs.map(d => d.data()));
+        }
+    });
 
     // Run rule-based gap analysis
     const gapItems = obligations.map(obl => {

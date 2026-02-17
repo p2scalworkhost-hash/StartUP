@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { adminAuth } from '@/lib/firebase/admin';
 
 // Force dynamic to prevent static generation issues
 export const dynamic = 'force-dynamic';

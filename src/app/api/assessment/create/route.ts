@@ -9,6 +9,10 @@ export async function POST(req: NextRequest) {
     const session = req.cookies.get('session')?.value;
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+    if (!adminAuth) {
+        return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+    }
+
     let uid: string;
     try {
         const claims = await adminAuth.verifySessionCookie(session, true);

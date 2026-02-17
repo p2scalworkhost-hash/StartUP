@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebase/admin';
+import { adminDb, adminAuth } from '@/lib/firebase/admin';
 
 function chunkArray<T>(arr: T[], size: number): T[][] {
     return Array.from({ length: Math.ceil(arr.length / size) }, (_, i) =>
@@ -11,6 +11,17 @@ export async function GET(
     req: NextRequest,
     { params }: { params: { id: string } }
 ) {
+    // Auth check
+    const session = req.cookies.get('session')?.value;
+    if (!session || !adminAuth) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    try {
+        await adminAuth.verifySessionCookie(session, true);
+    } catch {
+        return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
+    }
+
     const assessmentId = params.id;
 
     if (!adminDb) {
@@ -43,12 +54,18 @@ export async function GET(
 
     const batches = chunkArray(validObligations, 10);
 
-    for (const batch of batches) {
-        const snap = await adminDb.collection('obligations')
+    // Parallel fetch (Eliminating Waterfall)
+    const promises = batches.map(batch =>
+        adminDb.collection('obligations')
             .where('obligation_id', 'in', batch)
-            .get();
+            .get()
+    );
+
+    const snapshots = await Promise.all(promises);
+
+    snapshots.forEach(snap => {
         obligations.push(...snap.docs.map(d => d.data()));
-    }
+    });
 
     return NextResponse.json({
         obligations,
