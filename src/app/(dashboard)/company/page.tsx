@@ -151,7 +151,7 @@ export default function CompanyPage() {
                         <div className="space-y-1.5">
                             <label className="text-sm font-medium text-slate-700">ประเภทนิติบุคคล</label>
                             <select
-                                className="w-full px-4 py-2 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                className="w-full px-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                                 value={formData.legal_type}
                                 onChange={e => setFormData({ ...formData, legal_type: e.target.value as CompanyDoc['legal_type'] })}
                             >
@@ -172,7 +172,7 @@ export default function CompanyPage() {
                         <div className="space-y-1.5">
                             <label className="text-sm font-medium text-slate-700">จำนวนพนักงาน</label>
                             <select
-                                className="w-full px-4 py-2 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                className="w-full px-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                                 value={formData.employee_count}
                                 onChange={e => setFormData({ ...formData, employee_count: e.target.value as CompanyDoc['employee_count'] })}
                             >
@@ -189,7 +189,7 @@ export default function CompanyPage() {
                             <input
                                 type="number"
                                 min="1"
-                                className="w-full px-4 py-2 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                className="w-full px-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                                 value={formData.branch_count}
                                 onChange={e => setFormData({ ...formData, branch_count: parseInt(e.target.value) || 1 })}
                             />
@@ -219,7 +219,7 @@ export default function CompanyPage() {
                             <label className="text-sm font-medium text-slate-700">จังหวัด</label>
                             <input
                                 type="text"
-                                className="w-full px-4 py-2 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                className="w-full px-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                                 value={formData.province}
                                 onChange={e => setFormData({ ...formData, province: e.target.value })}
                                 placeholder="ระบุจังหวัด"
@@ -230,7 +230,7 @@ export default function CompanyPage() {
                             <label className="text-sm font-medium text-slate-700">เขต / อำเภอ</label>
                             <input
                                 type="text"
-                                className="w-full px-4 py-2 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                className="w-full px-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                                 value={formData.district}
                                 onChange={e => setFormData({ ...formData, district: e.target.value })}
                                 placeholder="ระบุเขต/อำเภอ"
