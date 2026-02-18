@@ -1,9 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb, adminAuth } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
-import { computeGapLevel, computeRiskScore, computeOverallScore, computeByCategory } from '@/lib/engines/gap-analyzer';
+import { computeGapLevel, computeRiskScore, computeOverallScore, computeByCategory, RiskWeight } from '@/lib/engines/gap-analyzer';
 import { getTemplateRecommendation } from '@/lib/engines/recommendation-engine';
-import { chatCompletion } from '@/lib/openrouter';
+
+interface ObligationDoc {
+    obligation_id: string;
+    law_id: string;
+    category: string;
+    risk_weight: RiskWeight;
+    topic?: string;
+    checklist_question?: string;
+    required_evidence?: string;
+    risk_level?: string;
+}
 
 function chunkArray<T>(arr: T[], size: number): T[][] {
     return Array.from({ length: Math.ceil(arr.length / size) }, (_, i) =>
@@ -28,14 +38,23 @@ export async function POST(
 
     const assessmentId = params.id;
 
+    if (!adminDb) {
+        return NextResponse.json({ error: 'Database connection failed' }, { status: 500 });
+    }
+
     const assessmentRef = adminDb.collection('assessments').doc(assessmentId);
     const assessmentSnap = await assessmentRef.get();
+
+    if (!assessmentSnap.exists) {
+        return NextResponse.json({ error: 'Assessment not found' }, { status: 404 });
+    }
+
     const assessment = assessmentSnap.data()!;
 
-    const { compliance_records, applicable_obligations, profile } = assessment;
+    const { compliance_records = {}, applicable_obligations = [] } = assessment;
 
     // Fetch all obligations
-    const obligations: any[] = [];
+    const obligations: ObligationDoc[] = [];
     const batches = chunkArray(applicable_obligations, 10);
 
     // Parallel fetch (Eliminating Waterfall)
@@ -50,7 +69,7 @@ export async function POST(
 
     snapshots.forEach(snap => {
         if (snap) {
-            obligations.push(...snap.docs.map(d => d.data()));
+            obligations.push(...snap.docs.map(d => d.data() as ObligationDoc));
         }
     });
 
@@ -61,13 +80,14 @@ export async function POST(
 
         const gapLevel = computeGapLevel(status, obl.risk_weight);
         const riskScore = computeRiskScore(status, obl.risk_weight);
-        const recommendation = getTemplateRecommendation(obl, gapLevel);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const recommendation = getTemplateRecommendation(obl as any, gapLevel); // cast for recommendation engine if needed
 
         return {
             obligation_id: obl.obligation_id,
             law_id: obl.law_id,
             category: obl.category,
-            topic: obl.topic || obl.checklist_question, // Ensure we have a label
+            topic: obl.topic || obl.checklist_question || 'Topic',
             gap_level: gapLevel,
             risk_score: riskScore,
             recommendation,
@@ -75,29 +95,23 @@ export async function POST(
     });
 
     // Compute summary
-    let gapSummary: any = {
+    const gapSummary = {
         overall_score: computeOverallScore(gapItems),
         red_count: gapItems.filter(i => i.gap_level === 'red').length,
         yellow_count: gapItems.filter(i => i.gap_level === 'yellow').length,
         green_count: gapItems.filter(i => i.gap_level === 'green').length,
         by_category: computeByCategory(gapItems),
         items: gapItems,
+        ai_summary: {
+            executive_summary: 'การวิเคราะห์เสร็จสมบูรณ์ (AI Analysis Disabled)',
+            maturity_level: 'Reactive',
+            risk_profile: { score: 0, level: 'Low', top_risks: [] },
+            strength_weakness: { strengths: [], weaknesses: [] },
+            strategic_recommendations: { immediate: [], short_term: [], long_term: [] },
+            computed_at: new Date().toISOString()
+        },
         computed_at: new Date().toISOString(),
     };
-
-    // --- AI Analysis (DISABLED BY USER REQUEST) ---
-    /*
-    const criticalIssues = gapItems.filter(i => i.gap_level === 'red' || i.gap_level === 'yellow');
-
-    if (criticalIssues.length > 0) {
-        try {
-           // ... (AI Logic)
-        } catch (error) { ... }
-    } else { ... }
-    */
-
-    // Fallback static summary
-    gapSummary.ai_summary = 'การวิเคราะห์เสร็จสมบูรณ์ (AI Analysis Disabled)';
 
     await assessmentRef.update({
         gap_summary: gapSummary,

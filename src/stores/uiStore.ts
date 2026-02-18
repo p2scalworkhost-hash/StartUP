@@ -8,8 +8,8 @@ interface UIStore {
 
     // Modal
     activeModal: string | null;
-    modalData: any;
-    openModal: (modalId: string, data?: any) => void;
+    modalData: unknown;
+    openModal: (modalId: string, data?: unknown) => void;
     closeModal: () => void;
 
     // Sidebar

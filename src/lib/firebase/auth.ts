@@ -24,9 +24,10 @@ export async function loginWithEmail(email: string, password: string) {
 
         await createUserDocument(credential.user);
         return credential.user;
-    } catch (error: any) {
+    } catch (error) {
+        const e = error as { code?: string };
         // Fallback to Mock Mode if API Key is invalid or restricted
-        if (error.code === 'auth/api-key-not-valid' || error.code === 'auth/internal-error') {
+        if (e.code === 'auth/api-key-not-valid' || e.code === 'auth/internal-error') {
             console.warn('Authentication failed (Invalid Key). Switching to Mock Mode.');
 
             const mockUser = {
@@ -59,8 +60,9 @@ export async function registerWithEmail(email: string, password: string) {
         const credential = await createUserWithEmailAndPassword(auth, email, password);
         await createUserDocument(credential.user);
         return credential.user;
-    } catch (error: any) {
-        if (error.code === 'auth/api-key-not-valid' || error.code === 'auth/internal-error') {
+    } catch (error) {
+        const e = error as { code?: string };
+        if (e.code === 'auth/api-key-not-valid' || e.code === 'auth/internal-error') {
             const mockUser = {
                 uid: 'mock-user-123',
                 email: email,

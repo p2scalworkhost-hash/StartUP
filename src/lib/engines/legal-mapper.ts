@@ -86,7 +86,7 @@ export function mapTagsFromProfile(profile: AssessmentProfile): string[] {
         }
     }
 
-    return Array.from(tags);
+    return Array.from(tags) as string[];
 }
 
 // Law-to-tag mapping (seed data for admin to configure)
@@ -105,7 +105,7 @@ export const LAW_TAG_MAPPING: Record<string, string[]> = {
 // Find applicable laws by querying Firestore with tags
 export async function findApplicableLaws(
     tags: string[],
-    queryFn: (tags: string[]) => Promise<any[]>
-): Promise<any[]> {
+    queryFn: (tags: string[]) => Promise<Record<string, unknown>[]>
+): Promise<Record<string, unknown>[]> {
     return queryFn(tags);
 }

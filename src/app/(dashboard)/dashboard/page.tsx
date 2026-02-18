@@ -3,13 +3,12 @@
 import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
-import { Progress } from '@/components/ui/Progress';
 import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
 import { useAuthStore } from '@/stores/authStore';
 import { db } from '@/lib/firebase/client';
-import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
-import type { GapSummary } from '@/types/assessment';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import type { GapSummary, AssessmentDoc, GapItem } from '@/types/assessment';
 
 export default function DashboardPage() {
     const { companyId } = useAuthStore();
@@ -30,7 +29,7 @@ export default function DashboardPage() {
 
                 if (!snap.empty) {
                     // Client-side sort: newest first
-                    const docs = snap.docs.map(d => d.data() as any);
+                    const docs = snap.docs.map(d => d.data() as AssessmentDoc);
                     docs.sort((a, b) => {
                         const tA = a.created_at?.seconds || 0;
                         const tB = b.created_at?.seconds || 0;
@@ -193,9 +192,9 @@ export default function DashboardPage() {
                                 <div className={`w-3 h-3 rounded-full flex-shrink-0 ${gap.gap_level === 'red' ? 'bg-red-500' : 'bg-amber-500'}`} />
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-medium text-slate-700 truncate">
-                                        {(gap as any).topic || (gap as any).checklist_question || 'ข้อกำหนดกฎหมาย'}
+                                        {(gap as GapItem).category || 'ข้อกำหนดกฎหมาย'}
                                     </p>
-                                    <p className="text-xs text-slate-400">{(gap as any).category} • Risk Score: {gap.risk_score}</p>
+                                    <p className="text-xs text-slate-400">{(gap as GapItem).category} • Risk Score: {gap.risk_score}</p>
                                 </div>
                                 <Badge variant={gap.gap_level === 'red' ? 'danger' : 'warning'} size="sm">
                                     {gap.gap_level === 'red' ? 'Critical' : 'Major'}

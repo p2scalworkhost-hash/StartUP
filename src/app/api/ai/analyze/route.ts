@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { chatCompletion, ChatMessage } from '@/lib/openrouter';
+import { chatCompletion } from '@/lib/openrouter';
 
 export async function POST(req: NextRequest) {
     try {

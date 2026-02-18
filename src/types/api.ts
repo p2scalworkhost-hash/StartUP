@@ -12,8 +12,8 @@ export interface CreateAssessmentResponse {
 }
 
 export interface LegalMappingResponse {
-    laws: any[];
-    obligations: any[];
+    laws: unknown[];
+    obligations: unknown[];
     law_count: number;
     obligation_count: number;
 }

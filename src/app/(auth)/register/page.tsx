@@ -34,8 +34,10 @@ export default function RegisterPage() {
             await registerWithEmail(email, password);
             // Company profile will be created in the next step
             router.push('/dashboard');
-        } catch (err: any) {
-            setError(err.message || 'สมัครสมาชิกไม่สำเร็จ กรุณาลองใหม่');
+            // Company profile will be created in the next step
+            router.push('/dashboard');
+        } catch (err) {
+            setError((err as Error).message || 'สมัครสมาชิกไม่สำเร็จ กรุณาลองใหม่');
         } finally {
             setLoading(false);
         }

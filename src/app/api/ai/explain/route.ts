@@ -9,10 +9,8 @@ export async function POST(req: NextRequest) {
     try {
         const explanation = await explainLaw(law_title, law_content, company_context);
         return NextResponse.json({ explanation });
-    } catch (error: any) {
-        return NextResponse.json(
-            { error: error.message || 'AI error' },
-            { status: 500 }
-        );
+    } catch (error) {
+        console.error('Explanation API Error:', error);
+        return NextResponse.json({ error: 'Failed to generate explanation' }, { status: 500 });
     }
 }

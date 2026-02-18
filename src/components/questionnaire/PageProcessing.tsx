@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAssessmentStore } from '@/stores/assessmentStore';
 import { useAuthStore } from '@/stores/authStore';
+import type { AssessmentProfile } from '@/types/assessment';
 import { db, auth } from '@/lib/firebase/client';
 import { collection, addDoc, serverTimestamp, query, where, getDocs, doc, setDoc } from 'firebase/firestore';
 import { mapTagsFromProfile } from '@/lib/engines/legal-mapper';
@@ -24,8 +25,6 @@ export function PageProcessing() {
     const router = useRouter();
 
     useEffect(() => {
-        let isMounted = true;
-
         const processSteps = async () => {
             if (!auth.currentUser) {
                 console.error('No user logged in');
@@ -64,7 +63,7 @@ export function PageProcessing() {
                 // Step 1: Analyze Tags
                 setCurrentStep(1);
                 setProcessingStep(STEPS[1].label);
-                const activityTags = mapTagsFromProfile(profile as any); // Cast profile
+                const activityTags = mapTagsFromProfile(profile as AssessmentProfile); // Cast profile
                 await new Promise(r => setTimeout(r, 1000));
 
                 // Step 2: Find Laws
@@ -113,7 +112,7 @@ export function PageProcessing() {
                 setCurrentStep(3);
                 setProcessingStep(STEPS[3].label);
 
-                const assessmentRef = await addDoc(collection(db, 'assessments'), {
+                await addDoc(collection(db, 'assessments'), {
                     company_id: companyRef.id,
                     profile,
                     activity_tags: activityTags,
@@ -149,8 +148,7 @@ export function PageProcessing() {
         };
 
         processSteps();
-
-        return () => { isMounted = false; };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     return (

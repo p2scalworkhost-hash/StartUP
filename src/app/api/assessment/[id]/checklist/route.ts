@@ -11,7 +11,7 @@ export async function GET(
     req: NextRequest,
     { params }: { params: { id: string } }
 ) {
-    // Auth check
+    // Auth check (Fixed import of adminAuth)
     const session = req.cookies.get('session')?.value;
     if (!session || !adminAuth) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -44,9 +44,9 @@ export async function GET(
     }
 
     // Fetch obligations
-    const obligations: any[] = [];
+    const obligations: Record<string, unknown>[] = [];
     // Validating obligations list
-    const validObligations = applicable_obligations.filter((id: any) => typeof id === 'string' && id.length > 0);
+    const validObligations = applicable_obligations.filter((id: string) => typeof id === 'string' && id.length > 0);
 
     if (validObligations.length === 0) {
         return NextResponse.json({ obligations: [], compliance_records: {} });

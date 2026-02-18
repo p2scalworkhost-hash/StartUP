@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
         let body;
         try {
             body = await req.json();
-        } catch (e: any) {
+        } catch {
             console.error('[API/Session] invalid JSON');
             return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
         }
@@ -48,10 +48,10 @@ export async function POST(req: NextRequest) {
 
         return response;
 
-    } catch (error: any) {
+    } catch (error) {
         console.error('[API/Session] Unhandled Error:', error);
         return NextResponse.json(
-            { error: 'Internal Server Error', details: error?.message || String(error) },
+            { error: 'Internal Server Error', details: String(error) },
             { status: 500 }
         );
     }
@@ -76,8 +76,8 @@ export async function GET(req: NextRequest) {
             role: decodedClaims.role || 'user',
             mode: 'live'
         });
-    } catch (error) {
-        return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
+    } catch {
+        return NextResponse.json({ isLogged: false }, { status: 401 });
     }
 }
 

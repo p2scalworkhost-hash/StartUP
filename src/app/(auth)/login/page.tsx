@@ -1,12 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { loginWithEmail } from '@/lib/firebase/auth';
 import Link from 'next/link';
 
 export default function LoginPage() {
-    const router = useRouter();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -20,8 +18,8 @@ export default function LoginPage() {
         try {
             await loginWithEmail(email, password);
             // Redirect handled by AuthProvider
-        } catch (err: any) {
-            setError(err.message || 'เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่');
+        } catch (err) {
+            setError((err as Error).message || 'เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่');
             setLoading(false);
         }
     };

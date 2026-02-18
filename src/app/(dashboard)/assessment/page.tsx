@@ -6,8 +6,9 @@ import { useAssessmentStore } from '@/stores/assessmentStore';
 import { ChecklistShell } from '@/components/checklist/ChecklistShell';
 import { useAuthStore } from '@/stores/authStore';
 import { db } from '@/lib/firebase/client';
-import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
+import type { AssessmentDoc } from '@/types/assessment';
 
 export default function AssessmentPage() {
     const { companyId } = useAuthStore();
@@ -40,7 +41,7 @@ export default function AssessmentPage() {
                     setView('profiling');
                 } else {
                     // Client-side sort
-                    const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as any));
+                    const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as unknown as AssessmentDoc & { id: string }));
                     docs.sort((a, b) => {
                         const tA = a.created_at?.seconds || 0;
                         const tB = b.created_at?.seconds || 0;

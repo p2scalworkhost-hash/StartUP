@@ -9,10 +9,8 @@ export async function POST(req: NextRequest) {
     try {
         const recommendation = await generateAIRecommendation(gap_items, company_profile);
         return NextResponse.json({ recommendation });
-    } catch (error: any) {
-        return NextResponse.json(
-            { error: error.message || 'AI error' },
-            { status: 500 }
-        );
+    } catch (error) {
+        console.error('Recommendation API Error:', error);
+        return NextResponse.json({ error: 'Failed to generate recommendations' }, { status: 500 });
     }
 }
