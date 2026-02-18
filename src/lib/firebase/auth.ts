@@ -10,19 +10,56 @@ import { doc, setDoc, getDoc } from 'firebase/firestore';
 
 const MOCK_USER_KEY = 'sheq_mock_user';
 
+// Helper to prevent infinite hangs
+function withTimeout<T>(promise: Promise<T>, ms: number, msg: string): Promise<T> {
+    return new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error(msg)), ms);
+        promise
+            .then((res) => {
+                clearTimeout(timer);
+                resolve(res);
+            })
+            .catch((err) => {
+                clearTimeout(timer);
+                reject(err);
+            });
+    });
+}
+
 export async function loginWithEmail(email: string, password: string) {
     try {
-        const credential = await signInWithEmailAndPassword(auth, email, password);
+        // Step 1: Auth (Timeout 15s)
+        const credential = await withTimeout(
+            signInWithEmailAndPassword(auth, email, password),
+            15000,
+            'Timeout: การเชื่อมต่อถูกบล็อกหรืออินเทอร์เน็ตมีปัญหา (กรุณาปิด AdBlock)'
+        );
+
         const idToken = await credential.user.getIdToken();
 
-        // Create session cookie via API
-        await fetch('/api/auth/session', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ idToken }),
-        });
+        // Create session cookie via API (Optional - can fail without breaking login)
+        try {
+            await fetch('/api/auth/session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ idToken }),
+            });
+        } catch (e) {
+            console.warn('Session cookie creation failed:', e);
+        }
 
-        await createUserDocument(credential.user);
+        // Step 2: Firestore (Timeout 5s)
+        // If this hangs due to AdBlock, we log warning but let user in
+        try {
+            await withTimeout(
+                createUserDocument(credential.user),
+                5000,
+                'Firestore timeout'
+            );
+        } catch (e) {
+            console.warn('User profile creation skipped due to timeout/error:', e);
+        }
+
         return credential.user;
     } catch (error) {
         const e = error as { code?: string };
@@ -57,8 +94,24 @@ export async function loginWithEmail(email: string, password: string) {
 export async function registerWithEmail(email: string, password: string) {
     // Similar mock logic could be added here if needed
     try {
-        const credential = await createUserWithEmailAndPassword(auth, email, password);
-        await createUserDocument(credential.user);
+        // Step 1: Create User (Timeout 15s)
+        const credential = await withTimeout(
+            createUserWithEmailAndPassword(auth, email, password),
+            15000,
+            'Timeout: การเชื่อมต่อถูกบล็อกหรืออินเทอร์เน็ตมีปัญหา (กรุณาปิด AdBlock)'
+        );
+
+        // Step 2: Firestore (Timeout 5s)
+        try {
+            await withTimeout(
+                createUserDocument(credential.user),
+                5000,
+                'Firestore timeout'
+            );
+        } catch (e) {
+            console.warn('User profile creation skipped due to timeout/error:', e);
+        }
+
         return credential.user;
     } catch (error) {
         const e = error as { code?: string };
