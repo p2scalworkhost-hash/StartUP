@@ -6,7 +6,7 @@ import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { useAuthStore } from '@/stores/authStore';
 import { db } from '@/lib/firebase/client';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, QuerySnapshot } from 'firebase/firestore';
 
 interface DashboardShellProps {
     children: React.ReactNode;
@@ -21,15 +21,34 @@ export function DashboardShell({ children }: DashboardShellProps) {
         async function checkCompany() {
             if (!uid) return;
 
+            // Handle Mock User explicitly to prevent hanging/redirect loops
+            if (uid === 'mock-user-123') {
+                console.log('Mock user detected, setting dummy company...');
+                setCompany({ id: 'mock-company-id', name: 'Mock Company Co., Ltd.' });
+                return;
+            }
+
             // If we already have companyId, no need to query
             if (companyId) return;
 
             try {
-                const q = query(
-                    collection(db, 'companies'),
-                    where('owner_uid', '==', uid)
-                );
-                const snap = await getDocs(q);
+                // Wrap query in a timeout to prevent infinite hanging
+                const queryPromise = new Promise<QuerySnapshot>((resolve, reject) => {
+                    const timer = setTimeout(() => reject(new Error('Firestore timeout')), 5000);
+                    const q = query(
+                        collection(db, 'companies'),
+                        where('owner_uid', '==', uid)
+                    );
+                    getDocs(q).then(res => {
+                        clearTimeout(timer);
+                        resolve(res);
+                    }).catch(err => {
+                        clearTimeout(timer);
+                        reject(err);
+                    });
+                });
+
+                const snap = await queryPromise;
 
                 if (!snap.empty) {
                     const doc = snap.docs[0];
@@ -43,6 +62,7 @@ export function DashboardShell({ children }: DashboardShellProps) {
                 }
             } catch (error) {
                 console.error('Error checking company:', error);
+                // If blocked/timeout, do NOT redirect. Let user navigate freely (or show error toast elsewhere)
             }
         }
 
