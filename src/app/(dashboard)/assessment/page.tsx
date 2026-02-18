@@ -51,14 +51,12 @@ export default function AssessmentPage() {
                     const latest = docs[0];
                     const status = latest.status;
 
-                    if (status === 'completed') {
-                        router.push('/dashboard');
-                        return;
-                    } else if (status === 'checklist' || status === 'gap_analysis') {
+                    if (status === 'checklist' || status === 'gap_analysis') {
+                        // Resume pending assessment
                         setAssessmentId(latest.id);
                         setView('checklist');
                     } else {
-                        // Reset store for new/cancelled assessment
+                        // If completed or other status, start NEW assessment
                         useAssessmentStore.getState().resetProfile();
                         setView('profiling');
                     }
