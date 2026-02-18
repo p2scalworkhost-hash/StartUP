@@ -3,6 +3,8 @@ import {
     createUserWithEmailAndPassword,
     signOut,
     onAuthStateChanged,
+    setPersistence,
+    browserSessionPersistence,
     User,
 } from 'firebase/auth';
 import { auth, db } from './client';
@@ -28,6 +30,9 @@ function withTimeout<T>(promise: Promise<T>, ms: number, msg: string): Promise<T
 
 export async function loginWithEmail(email: string, password: string) {
     try {
+        // Enforce Session Persistence (Clear on tab close)
+        await setPersistence(auth, browserSessionPersistence);
+
         // Step 1: Auth (Timeout 15s)
         const credential = await withTimeout(
             signInWithEmailAndPassword(auth, email, password),

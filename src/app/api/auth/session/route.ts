@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
         const response = NextResponse.json({ status: 'success', mode: 'live' });
 
         response.cookies.set('session', sessionCookie, {
-            maxAge: expiresIn / 1000,
+            // maxAge removed -> becomes Session Cookie (expires on browser close)
             httpOnly: true,
             secure: isProduction,
             sameSite: 'lax',
