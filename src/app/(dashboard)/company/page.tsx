@@ -141,7 +141,7 @@ export default function CompanyPage() {
                             <label className="text-sm font-medium text-slate-700">ชื่อบริษัท / สถานประกอบการ</label>
                             <input
                                 type="text"
-                                className="w-full px-4 py-2 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                className="w-full px-4 py-2 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-900"
                                 value={formData.name}
                                 onChange={e => setFormData({ ...formData, name: e.target.value })}
                                 placeholder="ระบุชื่อบริษัท"
