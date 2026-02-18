@@ -88,7 +88,13 @@ export default function CompanyPage() {
         try {
             const idToUse = companyId || doc(collection(db, 'companies')).id;
 
-            const dataToSave: any = {
+            const dataToSave: Partial<CompanyDoc> & {
+                company_id: string;
+                owner_uid: string;
+                updated_at: Timestamp;
+                created_at?: Timestamp;
+                member_uids?: string[];
+            } = {
                 ...formData,
                 company_id: idToUse,
                 owner_uid: uid,
@@ -147,7 +153,7 @@ export default function CompanyPage() {
                             <select
                                 className="w-full px-4 py-2 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                                 value={formData.legal_type}
-                                onChange={e => setFormData({ ...formData, legal_type: e.target.value as any })}
+                                onChange={e => setFormData({ ...formData, legal_type: e.target.value as CompanyDoc['legal_type'] })}
                             >
                                 <option value="บริษัท">บริษัทจำกัด</option>
                                 <option value="หจก.">ห้างหุ้นส่วนจำกัด (หจก.)</option>
@@ -168,7 +174,7 @@ export default function CompanyPage() {
                             <select
                                 className="w-full px-4 py-2 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                                 value={formData.employee_count}
-                                onChange={e => setFormData({ ...formData, employee_count: e.target.value as any })}
+                                onChange={e => setFormData({ ...formData, employee_count: e.target.value as CompanyDoc['employee_count'] })}
                             >
                                 <option value="<10">น้อยกว่า 10 คน</option>
                                 <option value="10-49">10 - 49 คน</option>
